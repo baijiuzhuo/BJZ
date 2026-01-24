@@ -644,6 +644,216 @@ def extract_motifs_from_msa(msa_file, min_len=6, conservation_threshold=0.7):
 
 ---
 
+## Phase 6.5: 蛋白质特性分析
+
+### 6.5.1 理化性质分析 (analyze_protein_properties)
+
+```python
+def analyze_protein_properties(seq_record):
+    """
+    使用Bio.SeqUtils.ProtParam计算蛋白理化性质
+    
+    返回参数:
+    - mw: 分子量 (Molecular Weight, Da)
+    - pi: 等电点 (Isoelectric Point)
+    - gravy: 总平均亲水性 (Grand Average of Hydropathy)
+    - instability: 不稳定指数 (Instability Index)
+    - length: 序列长度
+    """
+    # 序列清洗: 仅保留标准20种氨基酸
+    clean_seq = "".join([c for c in seq_str if c in "ACDEFGHIKLMNPQRSTVWY"])
+    
+    if len(clean_seq) >= 10:
+        analyser = ProteinAnalysis(clean_seq)
+        props["mw"] = analyser.molecular_weight()          # 分子量
+        props["pi"] = analyser.isoelectric_point()         # 等电点
+        props["gravy"] = analyser.gravy()                   # 疏水性指数
+        props["instability"] = analyser.instability_index() # 不稳定性指数
+```
+
+#### 输出展示 (HTML报告)
+
+| 属性 | 说明 | 典型范围 |
+|------|------|----------|
+| **MW** | 分子量 | 10-200 kDa |
+| **pI** | 等电点 | 4.0-11.0 |
+| **GRAVY** | 疏水性 (负=亲水, 正=疏水) | -2.0 ~ +2.0 |
+| **Instability** | ≤40稳定, >40不稳定 | 0-100 |
+
+---
+
+### 6.5.2 跨膜螺旋预测 (TMHMM/Phobius)
+
+#### 数据来源: InterProScan TSV结果
+
+```python
+# parse_domain_info() 中的TMHMM/Phobius解析
+for line in ipr_file:
+    parts = line.split('\t')
+    gid = parts[0]
+    analysis = parts[3]    # 分析工具名
+    signature_acc = parts[4]  # 签名类型
+    
+    # TMHMM跨膜螺旋检测
+    if analysis == 'TMHMM':
+        if signature_acc == 'TMhelix':
+            entry['tm'].add("TMHMM")
+    
+    # Phobius跨膜区域检测
+    elif analysis == 'Phobius':
+        if signature_acc == 'TRANSMEMBRANE':
+            entry['tm'].add("Phobius")
+```
+
+#### 输出格式
+
+```python
+# 每个基因返回:
+{
+    'tm': ['Phobius', 'TMHMM'],  # 检测到跨膜螺旋的工具列表
+    'sp': ['SignalP', 'Phobius']  # 检测到信号肽的工具列表
+}
+```
+
+---
+
+### 6.5.3 信号肽预测 (SignalP/Phobius)
+
+```python
+# InterProScan结果解析
+elif analysis.startswith('SignalP'):
+    # 匹配 SignalP-noTM (无跨膜) 或 SignalP-TM (有跨膜)
+    if "SignalP" in signature_acc:
+        entry['sp'].add("SignalP")
+
+elif analysis == 'Phobius':
+    if signature_acc == 'SIGNAL_PEPTIDE':
+        entry['sp'].add("Phobius")
+```
+
+#### InterProScan请求的分析类型
+
+```python
+# interproscan_runner.py
+appl = "PfamA,SuperFamily,CDD,Phobius,TMHMM,SignalP_EUK"
+
+# 本地模式
+cmd.extend(["-appl", "Pfam,SuperFamily,CDD,Phobius,TMHMM,SignalP_EUK"])
+```
+
+---
+
+### 6.5.4 染色体定位
+
+#### 染色体长度计算
+
+```python
+def calc_chromosome_lengths(genome_fasta):
+    """
+    从基因组FASTA计算染色体/scaffold长度
+    
+    优化: 优先读取.fai索引 (如存在)
+    """
+    # 1. 尝试读取.fai (快速)
+    fai_path = genome_path.with_suffix(genome_path.suffix + ".fai")
+    if fai_path.exists():
+        for line in fai_file:
+            parts = line.split('\t')
+            lengths[parts[0]] = int(parts[1])
+    
+    # 2. 回退到SeqIO解析 (慢)
+    else:
+        for record in SeqIO.parse(genome_path, "fasta"):
+            lengths[record.id] = len(record.seq)
+```
+
+#### 基因密度计算
+
+```python
+def calculate_gene_density(gff_file, chr_lengths, bin_size=500000):
+    """
+    计算染色体上的基因密度
+    
+    参数:
+    - bin_size: 500kb (默认)
+    
+    返回:
+    - density_map: {chr: [bin1_count, bin2_count, ...]}
+    - 归一化为 genes per Mb
+    """
+    # 初始化bins
+    for chrom, length in chr_lengths.items():
+        num_bins = math.ceil(length / bin_size)
+        density_map[chrom] = [0] * num_bins
+    
+    # 统计每个bin的基因数
+    for gene in gff_genes:
+        chrom = gene.chrom
+        pos = gene.start
+        bin_idx = pos // bin_size
+        density_map[chrom][bin_idx] += 1
+```
+
+#### 染色体定位图生成
+
+```python
+def render_chromosomal_map(structure_map, chr_lengths, gene_density, output_path):
+    """
+    使用Matplotlib绘制染色体定位图
+    
+    特性:
+    - 染色体按自然排序 (Chr1, Chr2, ... Chr10)
+    - 基因密度热图显示
+    - 目标基因家族成员位置标注
+    - 动态间距 (根据标签数量调整)
+    """
+    # 布局常量
+    BAR_HEIGHT = 0.35       # 染色体bar高度
+    LINE_SPACING = 0.15     # 标签行间距
+    LABELS_PER_COL = 6      # 每列最多6个标签
+    TRACK_PADDING = 0.6     # track间距
+    
+    # 按自然顺序排序染色体
+    target_chrs.sort(key=natural_keys)  # Chr1, Chr2, Chr10...
+```
+
+---
+
+### 6.5.5 GFF结构解析 (parse_gff_structure)
+
+```python
+def parse_gff_structure(gff_file, target_ids):
+    """
+    解析GFF3提取目标基因的外显子/CDS结构
+    
+    返回:
+    {
+        gene_id: {
+            'chr': 'Chr1',
+            'start': 12345,
+            'end': 15678,
+            'strand': '+',
+            'exons': [(12345, 12500), (13000, 13500), ...],
+            'cds': [(12350, 12500), (13000, 13450), ...]
+        }
+    }
+    
+    ID归一化策略:
+    - 处理 . vs _ 版本差异
+    - 移除前缀 (mrna-, transcript:, gene:, cds-)
+    """
+    # 预计算归一化查找表
+    for t in target_ids:
+        norm_targets[t] = t
+        norm_targets[t.replace('_', '.')] = t
+        norm_targets[t.replace('.', '_')] = t
+        # 版本后缀处理
+        norm_targets[base + '.1'] = t
+        norm_targets[base + '_1'] = t
+```
+
+---
+
 ## Phase 7: 系统发育树构建
 
 ### 7.1 工具优先级
