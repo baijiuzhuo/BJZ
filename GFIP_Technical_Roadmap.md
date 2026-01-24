@@ -1196,6 +1196,250 @@ def run_tomtom(meme_out_dir, jaspar_db_path):
 
 ---
 
+## 补充工具脚本
+
+### gff_normalizer.py (614行)
+
+GFF文件标准化工具，使用AGAT套件处理不同来源的GFF文件。
+
+#### 主要功能
+
+```python
+def normalize_gff(input_gff, output_gff, fix_overlaps=False, 
+                  generate_stats=True, generate_bed=False, 
+                  preserve_ids=False, verbose=False):
+    """
+    主工作流:
+    1. 检测输入格式 (ncbi, ensembl, phytozome, jgi, genbank)
+    2. 运行AGAT标准化
+    3. 可选: 修复重叠基因
+    4. 生成统计信息
+    5. 可选: 转换为BED格式
+    """
+```
+
+#### 格式检测
+
+```python
+def detect_gff_format(gff_path, sample_lines=1000):
+    """
+    通过分析GFF特征检测来源:
+    - NCBI: 包含 Dbxref=GeneID, RefSeq accessions
+    - Ensembl: 包含 ensembl-specific, biotype, transcript_id
+    - Phytozome: 包含 pacid, locusName
+    - JGI: 包含 jgi.genome, jgi_id
+    """
+```
+
+#### AGAT命令
+
+```bash
+# 标准化
+agat_convert_sp_gxf2gxf.pl -g input.gff -o normalized.gff
+
+# 修复重叠
+agat_sp_fix_overlapping_genes.pl -gff input.gff -o fixed.gff
+
+# 生成统计
+agat_sq_stat_basic.pl -gff input.gff
+
+# 转换BED
+agat_convert_sp_gff2bed.pl -gff input.gff -o output.bed
+```
+
+#### ID恢复
+
+```python
+def restore_original_ids(agat_gff, original_gff, output_gff):
+    """
+    AGAT会将基因ID重命名为nbis-gene-*格式
+    此函数通过坐标匹配恢复原始ID
+    
+    策略:
+    1. 从原始GFF构建 坐标→原始ID 映射
+    2. 扫描AGAT输出，根据坐标替换nbis-gene-*
+    """
+```
+
+---
+
+### merge_candidates.py (100行)
+
+合并HMM和BLAST搜索结果的候选序列。
+
+```python
+def main():
+    """
+    流程:
+    1. 加载HMM命中 (已是FASTA格式)
+    2. 解析BLAST表格结果
+    3. 从proteome提取BLAST命中序列
+    4. MD5去重 (基于序列内容)
+    5. 输出合并后的候选FASTA
+    """
+    
+    # MD5去重逻辑
+    for record in all_records:
+        seq_str = str(record.seq).strip().upper()
+        seq_hash = hashlib.md5(seq_str.encode('utf-8')).hexdigest()
+        if seq_hash not in seen_hashes:
+            seen_hashes.add(seq_hash)
+            candidate_records.append(record)
+```
+
+---
+
+### blast_verify.py (154行)
+
+使用BLASTp进行候选验证，带Identity过滤。
+
+```python
+def parse_and_extract(tbl_file, target_proteome, output_fasta, identity_cutoff=30.0):
+    """
+    关键参数: identity_cutoff (默认30%)
+    
+    过滤逻辑:
+    1. 解析BLAST表格 (fmt 6)
+    2. 提取 pident (第3列)
+    3. 仅保留 pident >= identity_cutoff 的命中
+    """
+    for line in f:
+        parts = line.split()
+        sseqid = parts[1]
+        pident = float(parts[2])
+        
+        if pident >= identity_cutoff:
+            valid_ids.add(sseqid)
+```
+
+---
+
+### run_batch_pipeline.py (234行)
+
+多物种批处理运行器。
+
+#### 数据准备
+
+```python
+def setup_species_data(species_dir, work_dir):
+    """
+    为每个物种准备数据:
+    1. 识别 Genome, Proteome, CDS, GFF 文件
+    2. 解压 .gz 文件到工作目录
+    3. 返回文件路径字典
+    
+    文件匹配模式:
+    - Genome: *_genomic.fna, *.fasta, *genome*
+    - Proteome: *_protein.faa, *.pep, *proteome*
+    - CDS: *_cds_from_genomic.fna, *.cds*
+    - GFF: *.gff3, *.gff
+    """
+```
+
+#### 批处理运行
+
+```python
+def run_pipeline_for_species(species_dir, work_dir, out_dir_base, 
+                              config_path, cpu_per_job, mode, api_key=None):
+    """
+    为单个物种运行pipeline v3
+    
+    mode 选项:
+    - 'full': 完整流程
+    - 'identification_only': 仅鉴定
+    - 'analysis_only': 仅分析
+    """
+```
+
+---
+
+### run_advanced_analysis.py (156行)
+
+独立的高级分析模块 (Phase 2)。
+
+```python
+def main():
+    """
+    主流程:
+    1. 检测MEME可用性: Local > Docker
+    2. 运行MEME发现motif
+    3. 解析MEME XML结果
+    4. 生成独立HTML报告
+    """
+    
+    # 策略选择
+    if shutil.which("meme"):
+        run_meme_local(input_fasta, meme_out_dir, n_motifs)
+        motif_source = "Gold Standard (MEME/Native)"
+    elif check_docker():
+        run_meme_docker(input_fasta, meme_out_dir, n_motifs)
+        motif_source = "Gold Standard (MEME/Docker)"
+```
+
+---
+
+### render_multi_species_summary_v2.py (1000行)
+
+多物种比较分析报告生成器。
+
+#### 数据收集
+
+```python
+def audit_species(res_dir, species, email, api_key=None):
+    """
+    收集单个物种的分析结果:
+    - 候选数量
+    - 验证通过率
+    - 基因组统计 (大小、染色体数)
+    - 结构冗余度
+    - 失败诊断
+    """
+
+def get_taxonomy_group(species_name, email, api_key=None):
+    """
+    通过NCBI Taxonomy获取物种分类:
+    - Bryophytes (苔藓)
+    - Lycophytes (石松)
+    - Ferns (蕨类)
+    - Gymnosperms (裸子植物)
+    - Monocots (单子叶)
+    - Eudicots (双子叶)
+    """
+```
+
+#### 失败诊断
+
+```python
+FAILURE_CATEGORIES = {
+    "no_candidates": {
+        "pattern": [r"Found 0 entries", r"Zero valid candidates"],
+        "reason": "No Candidates Found",
+        "suggestion": "Check query terms, domain list, or seed retrieval."
+    },
+    "domain_mismatch": {
+        "pattern": [r"0 valid.*?candidates", r"Domain.*?not found"],
+        "reason": "Domain Validation Failed",
+        "suggestion": "Verify domain accessions in CDD/InterPro."
+    },
+    # ... more categories
+}
+```
+
+#### 报告生成
+
+```python
+def generate_interactive_report(df, out_file):
+    """
+    生成交互式HTML报告:
+    - Chart.js 可视化图表
+    - 可排序表格
+    - 分类统计
+    - 失败原因分析
+    """
+```
+
+---
+
 ## 关键技术细节备忘
 
 ### ⚠️ 必须注意的处理步骤
@@ -1210,6 +1454,8 @@ def run_tomtom(meme_out_dir, jaspar_db_path):
 | **密码子比对后** | 终止密码子移除 | TAA/TAG/TGA | 避免KaKs错误 |
 | **密码子比对后** | N碱基列移除 | 全部 | 确保比对有效 |
 | **Motif分析** | 区块合并 | 距离<=10 | 连接相近保守区 |
+| **候选合并** | MD5去重 | 基于序列内容 | 避免ID差异导致重复 |
+| **GFF标准化** | ID恢复 | 坐标匹配 | 保留原始ID |
 
 ### 🔧 重要配置参数参考
 
@@ -1226,6 +1472,8 @@ def run_tomtom(meme_out_dir, jaspar_db_path):
 | `upstream_len` | 2000 | run_promoter_analysis | 启动子长度 |
 | `n_motifs` | 15 | pipeline_utils | MEME发现数 |
 | `bootstrap` | 1000 | pipeline_utils | IQ-TREE bootstrap |
+| `identity_cutoff` | 30.0 | blast_verify | BLAST验证Identity阈值 |
+| `cscore` | 0.7 | run_synteny | MCScanX共线性评分阈值 |
 
 ### 🔑 ID映射优先级
 
@@ -1240,6 +1488,29 @@ def run_tomtom(meme_out_dir, jaspar_db_path):
 8. 第一个 token                       → 备用策略
 ```
 
+### 📁 完整脚本清单
+
+| 脚本 | 行数 | 功能 |
+|------|------|------|
+| `run_pipeline_v3.py` | 1106 | 主控制器 |
+| `pipeline_utils.py` | 3292 | 工具函数库 |
+| `retrieve_seeds.py` | 463 | 种子序列获取 |
+| `build_hmm.py` | 212 | HMM模型构建 |
+| `search_extract.py` | 140 | HMM搜索 |
+| `scan_cdd_ncbi.py` | 191 | CDD域扫描 |
+| `interproscan_runner.py` | 345 | InterPro扫描 |
+| `universal_family_extractor.py` | 802 | 序列提取 |
+| `run_kaks_analysis.py` | 386 | Ka/Ks分析 |
+| `run_synteny_analysis.py` | 819 | 共线性分析 |
+| `run_promoter_analysis.py` | 147 | 启动子分析 |
+| `gff_normalizer.py` | 614 | GFF标准化 |
+| `merge_candidates.py` | 100 | 候选合并 |
+| `blast_verify.py` | 154 | BLAST验证 |
+| `run_batch_pipeline.py` | 234 | 批处理运行 |
+| `run_advanced_analysis.py` | 156 | 高级分析 |
+| `render_multi_species_summary_v2.py` | 1000 | 多物种报告 |
+
 ---
 
-*文档结束 - 版本 v3.1*
+*文档结束 - 版本 v3.2*
+
