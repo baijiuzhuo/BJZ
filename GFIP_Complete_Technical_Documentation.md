@@ -5,28 +5,29 @@
 
 ---
 
-## 目录
+## 📑 目录（点击跳转）
 
 | # | 模块 | 文件 | 定位 |
 |---|---|---|---|
-| 0 | **主控制器** | `run_pipeline_v3.py` | 14 步 Pipeline 编排 |
-| 1 | **配置工具** | `suggest_domains.py` | 三层 Domain 建议 |
-| 2 | **格式检测** | `format_detector.py` | GFF/PEP/CDS ID 映射 |
-| 3 | **GFF 标准化** | `gff_normalizer.py` | AGAT 标准化 |
-| 4 | **种子检索** | `retrieve_seeds.py` | NCBI/UniProt/InterPro |
-| 5 | **HMM 构建** | `build_hmm.py` | MAFFT + hmmbuild |
-| 6 | **HMM 搜索** | `search_extract.py` | hmmsearch + 提取 |
-| 7 | **BLAST 验证** | `blast_verify.py` | blastp 交叉验证 |
-| 8 | **InterProScan** | `interproscan_runner.py` | Domain 验证 |
-| 9 | **CDD 搜索** | `scan_cdd_ncbi.py` | NCBI CDD API |
-| 10 | **基因提取** | `universal_family_extractor.py` | Domain 过滤 + 数据集提取 |
-| 11 | **核心工具** | `pipeline_utils.py` | 61 函数工具库 |
-| 12 | **启动子分析** | `run_promoter_analysis.py` | Golden List + MEME |
-| 13 | **R 可视化** | `visualize_cis_elements.R` | ggtree + 热图 |
-| 14 | **Ka/Ks 分析** | `run_kaks_analysis.py` | 选择压力 |
-| 15 | **共线性分析** | `run_synteny_analysis.py` | JCVI + Circos |
-| 16 | **批量运行** | `run_batch_pipeline.py` | 多物种并行 |
-| 17 | **多物种汇总** | `render_multi_species_summary_v2.py` | 汇总报告 |
+| 0 | **主控制器** | [run_pipeline_v3.py](#mod-run-pipeline-v3) | 14 步 Pipeline 编排 |
+| 1 | **格式检测** | [format_detector.py](#mod-format-detector) | GFF/PEP/CDS ID 映射 |
+| 2 | **GFF 标准化** | [gff_normalizer.py](#mod-gff-normalizer) | AGAT 标准化 |
+| 3 | **种子检索** | [retrieve_seeds.py](#mod-retrieve-seeds) | NCBI/UniProt/InterPro |
+| 4 | **HMM 构建** | [build_hmm.py](#mod-build-hmm) | MAFFT + hmmbuild |
+| 5 | **HMM 搜索** | [search_extract.py](#mod-search-extract) | hmmsearch + 提取 |
+| 6 | **BLAST 验证** | [blast_verify.py](#mod-blast-verify) | blastp 交叉验证 |
+| 7 | **InterProScan** | [interproscan_runner.py](#mod-interproscan-runner) | Domain 验证 |
+| 8 | **CDD 搜索** | [scan_cdd_ncbi.py](#mod-scan-cdd-ncbi) | NCBI CDD API |
+| 9 | **基因提取** | [universal_family_extractor.py](#mod-universal-family-extractor) | Domain 过滤 + 数据集提取 |
+| 10 | **核心工具** | [pipeline_utils.py](#mod-pipeline-utils) | 61 函数工具库 |
+| 11 | **启动子分析** | [run_promoter_analysis.py](#mod-run-promoter-analysis) | Golden List + MEME |
+| 12 | **R 可视化** | [visualize_cis_elements.R](#mod-visualize-cis-elements) | ggtree + 热图 |
+| 13 | **Ka/Ks 分析** | [run_kaks_analysis.py](#mod-run-kaks-analysis) | 选择压力 |
+| 14 | **共线性分析** | [run_synteny_analysis.py](#mod-run-synteny-analysis) | JCVI + Circos |
+| 15 | **批量运行** | [run_batch_pipeline.py](#mod-run-batch-pipeline) | 多物种并行 |
+| 16 | **多物种汇总** | [render_multi_species_summary_v2.py](#mod-render-multi-species-summary) | 汇总报告 |
+
+> 💡 **提示**：点击文件名可直接跳转到对应模块的详细报告。每个模块末尾可 [⬆ 返回目录](#-目录点击跳转) 。
 
 ---
 
@@ -79,7 +80,11 @@ flowchart LR
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-run-pipeline-v3"></a>
+
 # run_pipeline_v3.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[run_pipeline_v3.py](file:///Users/baijiuzhuo/Downloads/pipeline/run_pipeline_v3.py)
 **行数**：1419 行 | **大小**：~65 KB
@@ -508,7 +513,11 @@ CLI → Config File → Default，通过 `None` 判断是否显式设置
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-format-detector"></a>
+
 # format_detector.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[format_detector.py](file:///Users/baijiuzhuo/Downloads/pipeline/format_detector.py)
 **行数**：553 行 | **大小**：~20 KB
@@ -810,7 +819,11 @@ profile.to_json(os.path.join(tmp_dir, "format_profile.json"))
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-gff-normalizer"></a>
+
 # gff_normalizer.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[gff_normalizer.py](file:///Users/baijiuzhuo/Downloads/pipeline/gff_normalizer.py)
 **行数**：614 行 | **大小**：~21 KB
@@ -1058,7 +1071,11 @@ if config.get("normalize_gff"):
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-retrieve-seeds"></a>
+
 # retrieve_seeds.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[retrieve_seeds.py](file:///Users/baijiuzhuo/Downloads/pipeline/retrieve_seeds.py)
 **行数**：476 行 | **大小**：~19 KB
@@ -1347,7 +1364,11 @@ InterPro API 底层检索 + UniProt 批量下载：
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-build-hmm"></a>
+
 # build_hmm.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[build_hmm.py](file:///Users/baijiuzhuo/Downloads/pipeline/build_hmm.py)
 **行数**：223 行 | **大小**：~9 KB
@@ -1618,7 +1639,11 @@ python build_hmm.py \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-search-extract"></a>
+
 # search_extract.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[search_extract.py](file:///Users/baijiuzhuo/Downloads/pipeline/search_extract.py)
 **行数**：140 行 | **大小**：~5 KB
@@ -1834,7 +1859,11 @@ python search_extract.py \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-blast-verify"></a>
+
 # blast_verify.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[blast_verify.py](file:///Users/baijiuzhuo/Downloads/pipeline/blast_verify.py)
 **行数**：203 行 | **大小**：~8 KB
@@ -2084,7 +2113,11 @@ python blast_verify.py \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-interproscan-runner"></a>
+
 # interproscan_runner.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[interproscan_runner.py](file:///Users/baijiuzhuo/Downloads/pipeline/interproscan_runner.py)
 **行数**：345 行 | **大小**：~13 KB
@@ -2424,7 +2457,11 @@ python interproscan_runner.py \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-scan-cdd-ncbi"></a>
+
 # scan_cdd_ncbi.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[scan_cdd_ncbi.py](file:///Users/baijiuzhuo/Downloads/pipeline/scan_cdd_ncbi.py)
 **行数**：208 行 | **大小**：~7 KB
@@ -2688,7 +2725,11 @@ python scan_cdd_ncbi.py \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-universal-family-extractor"></a>
+
 # universal_family_extractor.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[universal_family_extractor.py](file:///Users/baijiuzhuo/Downloads/pipeline/universal_family_extractor.py)
 **行数**：806 行 | **大小**：~32 KB
@@ -2963,7 +3004,11 @@ python universal_family_extractor.py \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-pipeline-utils"></a>
+
 # pipeline_utils.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[pipeline_utils.py](file:///Users/baijiuzhuo/Downloads/pipeline/pipeline_utils.py)
 **行数**：3765 行 | **大小**：~152 KB | **函数数**：61
@@ -3248,7 +3293,11 @@ flowchart LR
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-run-promoter-analysis"></a>
+
 # run_promoter_analysis.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[run_promoter_analysis.py](file:///Users/baijiuzhuo/Downloads/pipeline/run_promoter_analysis.py)
 **行数**：344 行 | **大小**：~13 KB
@@ -3493,7 +3542,11 @@ python run_promoter_analysis.py \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-visualize-cis-elements"></a>
+
 # visualize_cis_elements.R 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[visualize_cis_elements.R](file:///Users/baijiuzhuo/Downloads/pipeline/visualize_cis_elements.R)
 **行数**：211 行 | **大小**：~7 KB | **语言**：R
@@ -3723,7 +3776,11 @@ Rscript visualize_cis_elements.R \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-run-kaks-analysis"></a>
+
 # run_kaks_analysis.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[run_kaks_analysis.py](file:///Users/baijiuzhuo/Downloads/pipeline/run_kaks_analysis.py)
 **行数**：405 行 | **大小**：~18 KB
@@ -3960,7 +4017,11 @@ python run_kaks_analysis.py \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-run-synteny-analysis"></a>
+
 # run_synteny_analysis.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[run_synteny_analysis.py](file:///Users/baijiuzhuo/Downloads/pipeline/run_synteny_analysis.py)
 **行数**：1144 行 | **大小**：~51 KB
@@ -4201,7 +4262,11 @@ Member_Gene,Member_Chr,Member_Start,Member_End,Collinear_Gene,Collinear_Chr,Coll
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-run-batch-pipeline"></a>
+
 # run_batch_pipeline.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[run_batch_pipeline.py](file:///Users/baijiuzhuo/Downloads/pipeline/run_batch_pipeline.py)
 **行数**：234 行 | **大小**：~9 KB
@@ -4389,7 +4454,11 @@ python run_batch_pipeline.py \
 
 <div style="page-break-after: always;"></div>
 
+<a id="mod-render-multi-species-summary"></a>
+
 # render_multi_species_summary_v2.py 技术报告
+
+[⬆ 返回目录](#-目录点击跳转)
 
 **文件**：[render_multi_species_summary_v2.py](file:///Users/baijiuzhuo/Downloads/pipeline/render_multi_species_summary_v2.py)
 **行数**：1000 行 | **大小**：~46 KB
