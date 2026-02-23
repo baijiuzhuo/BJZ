@@ -1,7 +1,9 @@
-# GFIP 基因家族鉴定管线 — 完整技术路线文档
+# GFIP 基因家族鉴定工具 — 技术路线文档
 
-> **Gene Family Identification Pipeline (GFIP) — Comprehensive Technical Documentation**
+> **Gene Family Identification Pipeline (GFIP) — Technical Documentation**
 > 本文档整合了 GFIP 管线全部 17 个模块的技术报告，按执行顺序排列。
+> 版本: v3.2 (Quad-Core Edition)
+> 最后更新: 2026-02-24
 
 ---
 
